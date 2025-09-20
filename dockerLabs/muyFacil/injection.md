@@ -17,8 +17,8 @@ Al tener esta información, podemos ser ya un poco más especificos e intentar o
 nmap 172.17.0.3 -sV -p 22,80
 `
 
-R:
-`
+
+R:`
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.6 (Ubuntu Linux; protocol 2.0)
 80/tcp open  http    Apache httpd 2.4.52 ((Ubuntu))
