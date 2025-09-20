@@ -17,25 +17,27 @@ Al tener esta información, podemos ser ya un poco más especificos e intentar o
 nmap 172.17.0.3 -sV -p 22,80
 `
 
-
-R:`
+Obtenemos como respuesta:
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.6 (Ubuntu Linux; protocol 2.0)
 80/tcp open  http    Apache httpd 2.4.52 ((Ubuntu))
-`
+
 
 Como en el puerto 80/TCP está corriendo una página web, probaremos a poner en nuestro navegador 172.17.0.3 para ver que tipo de página es. 
 La web que está alojando Apache es una página de login, como la máquina se llama Injection, suponemos que será algo relacionado con SQLInjection y probaremos a introducir en el campo del nombre " admin' or 1=1; " y la contraseña cualquier cosa. 
 
 Con eso hemos conseguido acceder y visualizar el siguiente mensaje:
+
 `Bienvenido Dylan! Has insertado correctamente tu contraseña: KJSDFG789FGSDF78`
 
 Tenemos un nombre de usuario (Dylan) y un código (KJSDFG789FGSDF78) que puede ser una contraseña. Probamos a conectarnos por ssh con esas credenciales:
+
 `
 ssh dylan@172.17.0.3 
 ` 
 
 El acceso fue exitoso. Ya estamos dentro de la máquina. Con sudo -l obtuve una respuesta de que el comando no existía asi que no se me ocurría una forma de poder escalar privilegios, estuve explorando las carpetas de ssh y tampoco encontré nada. Sin embargo, en las carpetas del servidor web, /var/www/html haciendo un cat del archivo config.php:
+
 `
 <?php
 return [
