@@ -1,15 +1,18 @@
 Nombre de la máquina: Injection
 Dificultad: Muy fácil 
-Tiempo: Son las 19:15 - 20:07 
+Tiempo: 1 hora
 
 
 Empezamos con un escaneo normal:
+
 `
 nmap 172.17.0.3
 `
+
 En el que obtenemos como respuesta que los puertos 22/TCP y 80/TCP están abiertos. 
 
 Al tener esta información, podemos ser ya un poco más especificos e intentar obtener más datos que nos puedan ayudar:
+
 `
 nmap 172.17.0.3 -sV -p 22,80
 `
