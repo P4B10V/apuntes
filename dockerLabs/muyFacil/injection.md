@@ -38,7 +38,7 @@ ssh dylan@172.17.0.3
 
 El acceso fue exitoso. Ya estamos dentro de la máquina. Con sudo -l obtuve una respuesta de que el comando no existía asi que no se me ocurría una forma de poder escalar privilegios, estuve explorando las carpetas de ssh y tampoco encontré nada. Sin embargo, en las carpetas del servidor web, /var/www/html haciendo un cat del archivo config.php:
 
-`
+
 return [
         'db' => [
                 'host' => 'localhost',
@@ -50,7 +50,7 @@ return [
                 ]
         ]
 ];
-`
+
 
 
 Intentaremos conectarnos con mysql utilizando esas credenciales:
