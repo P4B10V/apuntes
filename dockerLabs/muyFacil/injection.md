@@ -61,10 +61,17 @@ mysql -u root -ppaso
 Hacemos un:
 `
 show databases;
+`
+`
  use register;
- select * from users;
- ` 
+`
+`
+select * from users;
+` 
+
+
 Aunque ya sabemos que existe una base de datos llamada register, pues aparece en config.php, obtenemos:
+
 `
 +----------+------------------+
 | username | passwd           |
